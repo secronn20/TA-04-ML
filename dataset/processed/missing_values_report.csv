@@ -1,0 +1,20 @@
+,Missing Values,Persentase (%)
+No,0,0.0
+year,0,0.0
+month,0,0.0
+day,0,0.0
+hour,0,0.0
+PM2.5,8739,2.08
+PM10,6449,1.53
+SO2,9021,2.14
+NO2,12116,2.88
+CO,20701,4.92
+O3,13277,3.16
+TEMP,398,0.09
+PRES,393,0.09
+DEWP,403,0.1
+RAIN,390,0.09
+wd,1822,0.43
+WSPM,318,0.08
+station,0,0.0
+timestamp,0,0.0

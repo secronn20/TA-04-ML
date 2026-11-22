@@ -1,0 +1,378 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Beijing Air Quality | LSTM Prediction</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <div class="brand">
+        <div class="brand-icon">
+            <i class="bi bi-wind"></i>
+        </div>
+        <div>
+            <h5>AirQuality</h5>
+            <small>Prediction System</small>
+        </div>
+    </div>
+
+    <div class="sidebar-menu">
+        <p class="menu-label">MENU UTAMA</p>
+
+        <a href="/" class="menu-item active">
+            <i class="bi bi-grid-1x2-fill"></i>
+            Dashboard
+        </a>
+
+        <a href="#prediction-section" class="menu-item">
+            <i class="bi bi-cpu"></i>
+            Prediksi LSTM
+        </a>
+
+        <a href="#evaluation-section" class="menu-item">
+            <i class="bi bi-graph-up"></i>
+            Evaluasi Model
+        </a>
+    </div>
+
+    <div class="sidebar-footer">
+        <div class="status-dot"></div>
+        <span>Model LSTM Aktif</span>
+    </div>
+</div>
+
+
+<main class="main-content">
+
+    <header class="topbar">
+        <div>
+            <h4>Dashboard</h4>
+            <p>Monitoring dan prediksi kualitas udara Beijing</p>
+        </div>
+
+        <div class="model-status">
+            <span class="status-dot"></span>
+            LSTM Model Online
+        </div>
+    </header>
+
+
+    <section class="welcome-section">
+        <div>
+            <span class="eyebrow">AIR QUALITY ANALYTICS</span>
+            <h1>Beijing Air Quality Prediction</h1>
+            <p>
+                Sistem prediksi konsentrasi PM2.5 menggunakan
+                algoritma Long Short-Term Memory (LSTM).
+            </p>
+        </div>
+
+        <div class="welcome-icon">
+            <i class="bi bi-cloud-sun"></i>
+        </div>
+    </section>
+
+
+    <!-- STATISTIK -->
+    <section class="stats-grid">
+
+        <div class="stat-card">
+            <div class="stat-icon blue">
+                <i class="bi bi-database"></i>
+            </div>
+            <div>
+                <span>Total Data</span>
+                <h3>{{ "{:,}".format(stats.total_data).replace(",", ".") }}</h3>
+                <small>Data historis</small>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon purple">
+                <i class="bi bi-geo-alt"></i>
+            </div>
+            <div>
+                <span>Stasiun</span>
+                <h3>{{ stats.total_stations }}</h3>
+                <small>Stasiun pemantauan</small>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon green">
+                <i class="bi bi-wind"></i>
+            </div>
+            <div>
+                <span>Rata-rata PM2.5</span>
+                <h3>{{ stats.average_pm25 }}</h3>
+                <small>µg/m³ seluruh dataset</small>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon orange">
+                <i class="bi bi-bullseye"></i>
+            </div>
+            <div>
+                <span>R² Model</span>
+                <h3>{{ "%.2f"|format(stats.r2 * 100) }}%</h3>
+                <small>Data pengujian</small>
+            </div>
+        </div>
+
+    </section>
+
+
+    <!-- PREDIKSI -->
+    <section id="prediction-section" class="content-card">
+
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">MACHINE LEARNING</span>
+                <h4>Prediksi Konsentrasi PM2.5</h4>
+                <p>
+                    Gunakan 24 jam data historis untuk memprediksi
+                    PM2.5 satu jam berikutnya.
+                </p>
+            </div>
+
+            <div class="heading-icon">
+                <i class="bi bi-cpu"></i>
+            </div>
+        </div>
+
+
+        <form method="POST" action="/" class="prediction-form">
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <label for="station" class="form-label">
+                        Pilih Stasiun Pemantauan
+                    </label>
+
+                    <select
+                        name="station"
+                        id="station"
+                        class="form-select"
+                        required
+                    >
+                        {% for station in stations %}
+                        <option
+                            value="{{ station }}"
+                            {% if station == selected_station %}selected{% endif %}
+                        >
+                            {{ station }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+
+                <div class="col-md-6">
+                    <label for="target_time" class="form-label">
+                        Tanggal dan Waktu Target
+                    </label>
+
+                    <input
+                        type="datetime-local"
+                        name="target_time"
+                        id="target_time"
+                        class="form-control"
+                        value="{{ selected_datetime }}"
+                        required
+                    >
+                </div>
+
+            </div>
+
+            <div class="input-information">
+                <i class="bi bi-info-circle"></i>
+                Sistem menggunakan 24 jam data sebelum waktu target.
+                Jika target berada dalam dataset historis, nilai aktual
+                juga akan ditampilkan sebagai pembanding.
+            </div>
+
+            <button type="submit" class="btn-predict">
+                <i class="bi bi-stars"></i>
+                Jalankan Prediksi LSTM
+            </button>
+
+        </form>
+
+        {% if error %}
+        <div class="alert alert-danger mt-4">
+            <i class="bi bi-exclamation-triangle"></i>
+            {{ error }}
+        </div>
+        {% endif %}
+
+        {% if prediction %}
+
+        <div class="prediction-result">
+
+            <div class="result-header">
+                <div>
+                    <span class="eyebrow">HASIL PREDIKSI</span>
+                    <h5>{{ selected_station }}</h5>
+                    <p>Target: {{ prediction.target_time }}</p>
+                </div>
+
+                <span class="result-badge">
+                    <i class="bi bi-check-circle-fill"></i>
+                    Prediksi Berhasil
+                </span>
+            </div>
+
+            <div class="result-value">
+                <div>
+                    <span>Prediksi PM2.5</span>
+                    <h2>{{ "%.2f"|format(prediction.prediction) }}</h2>
+                    <small>µg/m³</small>
+                </div>
+
+                <div class="result-symbol">
+                    <i class="bi bi-cloud-haze2"></i>
+                </div>
+            </div>
+
+            {% if prediction.actual is not none %}
+            <div class="actual-comparison">
+                <div>
+                    <span>Nilai Aktual</span>
+                    <h4>{{ "%.2f"|format(prediction.actual) }} µg/m³</h4>
+                </div>
+
+                <div>
+                    <span>Selisih Absolut</span>
+                    <h4>
+                        {{ "%.2f"|format(
+                            (prediction.actual - prediction.prediction)|abs
+                        ) }} µg/m³
+                    </h4>
+                </div>
+            </div>
+            {% else %}
+            <div class="input-information">
+                <i class="bi bi-clock-history"></i>
+                Data aktual belum tersedia karena waktu target berada
+                setelah periode dataset.
+            </div>
+            {% endif %}
+
+            <div class="history-information">
+                <i class="bi bi-clock-history"></i>
+                Data masukan:
+                {{ prediction.history_start }} sampai
+                {{ prediction.history_end }}
+            </div>
+
+        </div>
+
+
+        <!-- GRAFIK -->
+        <div class="chart-container">
+            <div class="chart-heading">
+                <div>
+                    <h5>Riwayat dan Hasil Prediksi</h5>
+                    <p>PM2.5 selama 24 jam terakhir dan prediksi berikutnya</p>
+                </div>
+            </div>
+
+            <div class="chart-wrapper">
+                <canvas id="predictionChart"></canvas>
+            </div>
+        </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <!-- EVALUASI -->
+    <section id="evaluation-section" class="content-card">
+
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">MODEL PERFORMANCE</span>
+                <h4>Evaluasi Model LSTM</h4>
+                <p>
+                    Hasil evaluasi model pada data testing.
+                </p>
+            </div>
+
+            <div class="heading-icon">
+                <i class="bi bi-bar-chart-line"></i>
+            </div>
+        </div>
+
+        <div class="evaluation-grid">
+
+            <div class="evaluation-item">
+                <span>Mean Absolute Error</span>
+                <h3>{{ stats.mae }}</h3>
+                <small>MAE (µg/m³)</small>
+            </div>
+
+            <div class="evaluation-item">
+                <span>Root Mean Squared Error</span>
+                <h3>{{ stats.rmse }}</h3>
+                <small>RMSE (µg/m³)</small>
+            </div>
+
+            <div class="evaluation-item">
+                <span>Coefficient of Determination</span>
+                <h3>{{ "%.4f"|format(stats.r2) }}</h3>
+                <small>R² Score</small>
+            </div>
+
+        </div>
+
+        <div class="evaluation-note">
+            <i class="bi bi-info-circle"></i>
+            MAE dan RMSE mengukur besarnya kesalahan prediksi,
+            sedangkan R² menunjukkan proporsi variasi target yang
+            dapat dijelaskan oleh model.
+        </div>
+
+    </section>
+
+
+    <footer>
+        <p>
+            Beijing Air Quality Prediction System
+            <span> | </span>
+            Implementasi LSTM - Tugas Akhir 04
+        </p>
+    </footer>
+
+</main>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+{% if prediction %}
+<script>
+    const historyLabels = {{ prediction.history_labels | tojson }};
+    const historyValues = {{ prediction.history_values | tojson }};
+    const predictedValue = {{ prediction.prediction | tojson }};
+    const actualValue = {{ prediction.actual | tojson }};
+    const targetLabel = {{ prediction.target_time | tojson }};
+</script>
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+</body>
+</html>

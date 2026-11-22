@@ -1,0 +1,12 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+.ipynb_checkpoints/
+
+dataset/raw/
+dataset/processed/air_quality_12_stations.csv
+dataset/processed/air_quality_cleaned.csv
+
+outputs/eda/
